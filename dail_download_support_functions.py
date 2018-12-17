@@ -133,7 +133,7 @@ def speech_processing_single_debate(single_debate_url):
     return(this_debate_dict)
 
 
-def speech_processing_whole_day(this_day_url):
+def speech_processing_whole_day(this_day_url, debates_folder):
     # print(this_day_url)
     link_list = this_day_debate_links(this_day_url)
     this_day_bs_obj = BS_html_parsed_from_html(this_day_url)
@@ -151,7 +151,6 @@ def speech_processing_whole_day(this_day_url):
                              'url': this_day_url,
                              'date': this_date,
                              'debates': this_days_debates_list}
-    debates_folder = "/Users/colleendriscoll/Desktop/scraped_json_by_day/"
     
     ## Writing to file
     file_name = debates_folder + this_date + ".json"

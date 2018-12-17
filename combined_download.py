@@ -3,6 +3,7 @@ from dail_download_support_functions import open_file_and_read_html, get_debate_
 
 
 file_directory = "/Users/colleendriscoll/Dropbox/Dissertation/data/Ireland/debates/oireachtas html files/"
+debates_folder_out = "/Volumes/CDriscoll/Dail Debates/"
 
 file_end_L2 = os.listdir(file_directory + "Level 2 pages")
 level_2_file_names = [file_directory + "Level 2 pages/" + 
@@ -26,7 +27,7 @@ for html_file in level_2_file_names[begin_num:]:
 		try:
 			day_index +=1
 			# Writing json to file based on date
-			speech_processing_whole_day(day_link)
+			speech_processing_whole_day(day_link, debates_folder_out)
 		except (KeyboardInterrupt, SystemExit):
 			raise
 		except:
