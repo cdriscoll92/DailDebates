@@ -120,7 +120,8 @@ def speech_processing_single_debate(single_debate_url):
                     text_to_join.append(s)
                 else:
                     emphasized_text = re.search("<em>",str(s))
-                    if emphasized_text is not None:
+                    bold_text = re.search("<b>", str(s))
+                    if emphasized_text is not None | bold_text is not None:
                         text_to_join.append(s.text[:])
                         
         speech_joined = "\n".join(text_to_join)
