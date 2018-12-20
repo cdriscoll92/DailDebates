@@ -5,6 +5,8 @@ import bs4
 from bs4 import BeautifulSoup
 import requests
 
+sleep_time = 1
+
 ## 2. Download the first page for each Dail term
 
 def open_file_and_read_html(filename):
@@ -53,7 +55,7 @@ def level_2_pages_download(url):
         file.write(page)
 
 def BS_html_parsed_from_html(URL):
-    time.sleep(2)
+    time.sleep(sleep_time)
     bs_out = BeautifulSoup(requests.get(URL).text, "html.parser")
     return(bs_out)
 

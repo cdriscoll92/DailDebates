@@ -3,8 +3,8 @@ from dail_download_support_functions import open_file_and_read_html, get_debate_
 
 
 file_directory = "/Users/colleendriscoll/Dropbox/Dissertation/data/Ireland/debates/oireachtas html files/"
-debates_folder_out = "/Volumes/CDriscoll/Dail Debates/"
-errors_file_out = "/Volumes/CDriscoll/Dail Debates/Errors.txt"
+debates_folder_out = "/Users/colleendriscoll/Dropbox/Dail Debates/"
+errors_file_out = "/Users/colleendriscoll/Dropbox/Dail Debates/errors.txt"
 
 file_end_L2 = os.listdir(file_directory + "Level 2 pages")
 level_2_file_names = [file_directory + "Level 2 pages/" + 
@@ -12,7 +12,7 @@ level_2_file_names = [file_directory + "Level 2 pages/" +
 
 ### PUTTING IT ALL TOGETHER
 
-begin_num = 0
+begin_num = 53
 end_num = begin_num
 day_index = 0
 errors = []
