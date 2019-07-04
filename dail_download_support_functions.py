@@ -5,8 +5,6 @@ import bs4
 from bs4 import BeautifulSoup
 import requests
 
-sleep_time = 1
-
 ## 2. Download the first page for each Dail term
 
 def open_file_and_read_html(filename):
@@ -49,13 +47,13 @@ def level_2_pages_download(url):
     file_name = dail_term + "_" + page_num + ".html"
     file_path = directory + file_name
 
-    time.sleep(2)
+    time.sleep(1)
     page = requests.get(url).text
     with open(file_path, "w+") as file:
         file.write(page)
 
 def BS_html_parsed_from_html(URL):
-    time.sleep(sleep_time)
+    time.sleep(1)
     bs_out = BeautifulSoup(requests.get(URL).text, "html.parser")
     return(bs_out)
 
@@ -93,50 +91,71 @@ def this_day_debate_links(URL):
 ## 7. Process speech pages for each page in all pages for each Dail term
 
 def speech_processing_single_debate(single_debate_url):
+    name_beginning_regex = "^([\wÉéÁáÓó\&\s\.\,'\(\)]+):"
+
     this_debate_page = BS_html_parsed_from_html(single_debate_url)
-    this_debate_subject = this_debate_page.select("h2")[0].contents[0]
-    this_debate_speech_segments = this_debate_page.findAll('div', {'class': 'speech'})
+    if len(this_debate_page.select("h2"))>0:
+        this_debate_subject = this_debate_page.select("h2")[0].contents[0]
+    else:
+        this_debate_subject = ""
+
+    this_debate_speech_segments = this_debate_page.findAll('div',
+                                                           {'class': ['speech', 'speech_brief', 'question', 'summary']})
     this_debate_dict = {'subject': this_debate_subject,
                             'speeches': []}
-    for i in range(len(this_debate_speech_segments)):
+    # print(this_debate_speech_segments)
+    for speech_segment in this_debate_speech_segments:
+        record_class = speech_segment['class'][0]
+        speech_joined = ""
+        text_to_join = []
+
         ## Speaker ID -- only one
-        this_debate_speaker_ID = this_debate_speech_segments[i].findAll("a", {"class":"c-avatar__name-link"})
+        this_debate_speaker_ID = speech_segment.findAll("a", {"class":"c-avatar__name-link"})
         if this_debate_speaker_ID != []:
             this_debate_segment_speaker = this_debate_speaker_ID[0]
             speaker_ID_cleaned = this_debate_segment_speaker['href'].split("/")[-2]
         else:
             speaker_ID_cleaned = ""
         ## Speaker name -- only one
-        this_debate_speaker_name = "".join(this_debate_speech_segments[i].select("h4")[0].text[:])
-        ## Speech -- multiple paragraphs
-        this_debate_all_speech_segments = this_debate_speech_segments[i].findAll("p")
-        speech_joined = ""
-        text_to_join = [] ## Speech text
-        
-        ## Check to see if I can just type this_debate_all_speech_segments[j].contents.text
-        for j in range(len(this_debate_all_speech_segments)):
-            speech_segment_contents = this_debate_all_speech_segments[j].contents
-            ## Emphasized text I still want
-            for s in speech_segment_contents:
-                if isinstance(s, bs4.element.NavigableString):
-                    text_to_join.append(s)
-                else:
-                    emphasized_text = re.search("<em>",str(s))
-                    bold_text = re.search("<b>", str(s))
-                    if emphasized_text is not None or bold_text is not None:
-                        text_to_join.append(s.text[:])
-                        
-        speech_joined = "\n".join(text_to_join)
-#         print(speech_joined)
-        speech_joined = re.sub("([a-z, ])\n([A-Za-z0-9 ])", "\\1 \\2", speech_joined)
-        this_speech_dict = {'ID': speaker_ID_cleaned,
-                            'name': this_debate_speaker_name,
-                            'text': speech_joined}
-        this_debate_dict['speeches'].append(this_speech_dict)
+        name_listed = speech_segment.select("h4")
+        if name_listed == []:
+            printed_contents = speech_segment.contents
+            if(len(printed_contents) >0):
+                printed_contents_text = str(printed_contents[0])
+                speaker_present = re.search(name_beginning_regex, printed_contents_text)
+                if speaker_present:
+                    this_debate_speaker_name = speaker_present.group(0)
+                    text_start_at = speaker_present.span()[1]
+                    text_to_join = [printed_contents_text[text_start_at:]]
+        else:
+            this_debate_speaker_name = "".join(speech_segment.select("h4")[0].text[:])
+            ## Speech -- multiple paragraphs
+            this_debate_all_speech_segments = speech_segment.findAll("p")
+
+            ## Check to see if I can just type this_debate_all_speech_segments[j].contents.text
+            for j in range(len(this_debate_all_speech_segments)):
+                speech_segment_contents = this_debate_all_speech_segments[j].contents
+                ## Emphasized text I still want
+                for s in speech_segment_contents:
+                    if isinstance(s, bs4.element.NavigableString):
+                        text_to_join.append(s)
+                    else:
+                        emphasized_text = re.search("<em>",str(s))
+                        bolded_text = re.search("strong", str(s))
+                        if emphasized_text is not None or bolded_text is not None:
+                            text_to_join.append(s.text[:])
+        if len(text_to_join) >0:
+            speech_joined = "\n".join(text_to_join)
+            speech_joined = re.sub("([a-z, ])\n([A-Za-z0-9 ])", "\\1 \\2", speech_joined)
+            this_speech_dict = {'ID': speaker_ID_cleaned,
+                                'name': this_debate_speaker_name,
+                                'text': speech_joined,
+                               'record_class': record_class}
+            this_debate_dict['speeches'].append(this_speech_dict)
     return(this_debate_dict)
 
 
-def speech_processing_whole_day(this_day_url, debates_folder):
+def speech_processing_whole_day(this_day_url):
     # print(this_day_url)
     link_list = this_day_debate_links(this_day_url)
     this_day_bs_obj = BS_html_parsed_from_html(this_day_url)
@@ -154,6 +173,7 @@ def speech_processing_whole_day(this_day_url, debates_folder):
                              'url': this_day_url,
                              'date': this_date,
                              'debates': this_days_debates_list}
+    debates_folder = "/Volumes/CDriscoll2/Dail Debates Redo/"
     
     ## Writing to file
     file_name = debates_folder + this_date + ".json"
